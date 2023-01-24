@@ -1,0 +1,72 @@
+version: "3.9"
+services:
+  database:
+      image: mysql
+      volumes:
+        - mysqldb:/var/lib/mysql
+        - ./data/init.sql:/docker-entrypoint-initdb.d/init.sql
+      restart: always
+      environment:
+        - MYSQL_ROOT_PASSWORD=core
+        - MYSQL_DATABASE=cerbos
+        - MYSQL_USER=core
+        - MYSQL_PASSWORD=core
+      ports:
+      - "3306:3306" 
+      networks:
+        - intranet
+  cerbos:
+    container_name: cerbos
+    image: ghcr.io/cerbos/cerbos:latest
+    restart: always
+    command: ["server", "--config=/config/conf.yaml", "--log-level=warn"]
+    volumes:
+      - ./config:/config
+    depends_on:
+      - database
+    ports:
+      - 3592:3592
+      - 3593:3593
+    networks:
+      - intranet
+  
+ 
+  # server:
+  #   container_name: server
+  #   build: 
+  #     context: ./server
+  #     dockerfile: Dockerfile.server
+  #   ports:
+  #     - 9000:9000
+  #   environment:
+  #     - SERVER_PORT=9000
+  #     - CERBOS_ADDR=dns:///cerbos:3593
+  #     - CERBOS_ADMIN_ADDR=dns:///cerbos:3593
+  #     - CERBOS_USERNAME=cerbos
+  #     - CERBOS_PASSWORD=randomHash
+  #   depends_on:
+  #     - cerbos
+  #     - database
+  #   networks:
+  #     - intranet
+  # client:
+  #   container_name: client
+  #   build: 
+  #     context: ./client
+  #     dockerfile: Dockerfile.client
+  #   ports:
+  #     - 8080:8080
+  #   environment:
+  #     - CLIENT_ADDR=server:9000
+  #     - CLIENT_PORT=:8080
+  #   depends_on:
+  #     - server
+  #     - cerbos
+  #     - database
+  #   networks:
+  #     - intranet
+networks:
+  intranet:
+volumes:
+  mysqldb:
+    name: vol-mysqldb
